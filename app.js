@@ -4,7 +4,7 @@ const path = require("path");
 const dotenv = require("dotenv");
 const connectDB = require("./db/db");
 const Email = require("./model/mail");
-const EmailLog = require("./model/EmailLog"); 
+const EmailLog = require("./model/EmailLog");
 dotenv.config();
 const app = express();
 
@@ -13,6 +13,7 @@ connectDB();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+app.use(express.static('public'))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -29,14 +30,19 @@ const transporter = nodemailer.createTransport({
 app.get("/", (req, res) => {
   res.render("index");
 })
+app.get("/admin", async (req, res) => {
+  const emailLog = await EmailLog.find();
+  console.log(emailLog, "email_log");
+  res.render("admin", { emailLog });
+})
 app.get("/mail", async (req, res) => {
   try {
 
-    const emailLog =  await EmailLog.find();
-    console.log(emailLog,"email_log");
+    const emailLog = await EmailLog.find();
+    console.log(emailLog, "email_log");
     res.render("email_log", { emailLog });
   } catch (error) {
-    
+
   }
 })
 app.post("/", (req, res) => {
