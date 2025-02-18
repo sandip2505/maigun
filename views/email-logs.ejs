@@ -1,0 +1,107 @@
+<!-- views/email-logs.ejs -->
+<%- include('partials/header', {title: 'Email Logs', currentPage: 'email-logs'}) %>
+
+<div class="page-content">
+    <div class="logs-container">
+        <h1>Email Logs</h1>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="dateRange">Date Range:</label>
+                <select id="dateRange">
+                    <option value="today">Today</option>
+                    <option value="week">Last 7 Days</option>
+                    <option value="month">Last 30 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="status">Status:</label>
+                <select id="status">
+                    <option value="all">All</option>
+                    <option value="sent">Sent</option>
+                    <option value="failed">Failed</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="logs-table-container">
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Subject</th>
+                        <th>Recipients</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% emailLogs.forEach(function(log) { %>
+                        <tr>
+                            <td><%= log.date %></td>
+                            <td><%= log.subject %></td>
+                            <td><%= log.recipients %></td>
+                            <td>
+                                <span class="status-badge status-<%= log.status.toLowerCase() %>">
+                                    <%= log.status %>
+                                </span>
+                            </td>
+                            <td>
+                                <button class="action-btn" onclick="viewDetails('<%= log.id %>')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn" onclick="resendEmail('<%= log.id %>')">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+            <span>Page 1 of 5</span>
+            <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+</div>
+
+<style>
+.logs-container {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.logs-table-container {
+    overflow-x: auto;
+}
+
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+}

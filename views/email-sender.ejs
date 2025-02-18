@@ -1,0 +1,104 @@
+<!-- views/email-sender.ejs -->
+<%- include('partials/header', {title: 'Email Sender', currentPage: 'email-sender'}) %>
+
+<div class="page-content">
+    <div class="email-container">
+        <h1>Email Sender</h1>
+
+        <div id="successAlert" class="alert alert-success"></div>
+        <div id="errorAlert" class="alert alert-error"></div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Sending Email...</p>
+        </div>
+
+        <form id="emailForm" method="post">
+            <div class="form-group">
+                <label for="recipients">Recipients:</label>
+                <select id="recipients" name="recipients" multiple required>
+                    <% companies.forEach(function(company) { %>
+                        <option value="<%= company.email %>"><%= company.companyName %> (<%= company.email %>)</option>
+                    <% }); %>
+                </select>
+                <div id="recipientsError" class="error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input type="text" id="subject" name="subject" required>
+                <div id="subjectError" class="error"></div>
+            </div>
+            <div class="form-group">
+                <label for="attachments">Attachments:</label>
+                <input type="file" id="attachments" name="attachments" multiple>
+                <div id="attachmentsError" class="error"></div>
+            </div>
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" rows="10" required></textarea>  </div> <div id="messageError" class="error"></div>
+            </div>
+
+            
+
+            <button type="submit" id="sendButton">Send Email</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.ckeditor.com/4.20.0/standard/ckeditor.js"></script> <script>
+    CKEDITOR.replace('message'); // Replace 'message' with the ID of your textarea
+</script>
+
+<style>
+.email-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+select[multiple] {
+    height: 150px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+button {
+    width: 100%;
+    padding: 1rem;
+    background: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background: #34495e;
+}
+</style>

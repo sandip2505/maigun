@@ -1,0 +1,53 @@
+<!-- views/partials/header.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/Homestyle.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <div class="logo">
+                <i class="fas fa-cube"></i>
+                <span>Admin Panel</span>
+            </div>
+            <nav class="main-nav">
+                <a href="/" class="nav-item <%= currentPage === 'home' ? 'active' : '' %>">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/company-registration" class="nav-item <%= currentPage === 'company-registration' ? 'active' : '' %>">
+                    <i class="fas fa-building"></i>
+                    <span>Company Registration</span>
+                </a>
+                <a href="/email-sender" class="nav-item <%= currentPage === 'email-sender' ? 'active' : '' %>">
+                    <i class="fas fa-envelope"></i>
+                    <span>Email Sender</span>
+                </a>
+                <a href="/email-logs" class="nav-item <%= currentPage === 'email-logs' ? 'active' : '' %>">
+                    <i class="fas fa-history"></i>
+                    <span>Email Logs</span>
+                </a>
+                <a href="/dashboard" class="nav-item <%= currentPage === 'dashboard' ? 'active' : '' %>">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Dashboard</span>
+                </a>
+            </nav>
+            <div class="user-menu">
+                <i class="fas fa-user"></i>
+                <span>Admin</span>
+            </div>
+        </header>
+
+        <main class="content">
+            <!-- Content from individual pages will be inserted here -->
+          
+        </main>
+    </div>
+    <script src="/js/main.js"></script>
+</body>
+</html>

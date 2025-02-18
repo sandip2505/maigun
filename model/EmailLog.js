@@ -1,16 +1,34 @@
-const mongoose = require("mongoose");
+// models/EmailLog.js
+const mongoose = require('mongoose');
 
-const EmailLogSchema = new mongoose.Schema({
-  subject: { type: String, required: true },
-  message: { type: String, required: true },
-  successful: [{ type: String }], // Array of successfully sent emails
-  failed: [
-    {
-      email: { type: String, required: true },
-      error: { type: String, required: true }
+const emailLogSchema = new mongoose.Schema({
+    subject: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    message: {
+        type: String,
+        required: true
+    },
+    recipients: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company',
+        required: true
+    }],
+    status: {
+        type: String,
+        enum: ['pending', 'sent', 'failed'],
+        default: 'pending'
+    },
+    error: {
+        type: String
+    },
+    sentAt: {
+        type: Date
     }
-  ],
-  sentAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model("EmailLog", EmailLogSchema);
+const EmailLog = mongoose.model('EmailLog', emailLogSchema);
+
+module.exports = EmailLog;

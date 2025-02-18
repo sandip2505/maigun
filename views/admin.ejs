@@ -41,24 +41,7 @@
                 <div class="header">
                     <h1>Users</h1>
                 </div>
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <h3>Total Users</h3>
-                        <div class="value">1,234</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Revenue</h3>
-                        <div class="value">$45,678</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Orders</h3>
-                        <div class="value">892</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Products</h3>
-                        <div class="value">156</div>
-                    </div>
-                </div>
+
 
                 <div class="recent-activity">
                     <h2>Recent Activity</h2>
@@ -74,40 +57,51 @@
         <!-- Users Section -->
         <div id="users" class="content-section">
             <div class="header">
-                <div class="">
-                    <h1>HR Registration</h1>
-
+                <div class="form-container">
+                    <h1>Company Registration</h1>
+        
                     <!-- Alert Messages -->
                     <div id="successAlert" class="alert alert-success"></div>
                     <div id="errorAlert" class="alert alert-error"></div>
-
+        
                     <!-- Loading Indicator -->
                     <div id="loading" class="loading">
                         <div class="loading-spinner"></div>
-                        <p>Sending emails...</p>
+                        <p>Processing Registration...</p>
                     </div>
-
-                    <form id="emailForm">
+        
+                    <form id="companyForm" method="post">
                         <div class="form-group">
-                            <label for="copmpany">Copmpany:</label>
-                            <input type="text" id="copmpany" name="sucopmpanyject" placeholder="Copmpany" required>
-                            <div id="copmpanyError" class="error"></div>
+                            <label for="companyName">Company Name:</label>
+                            <input type="text" id="companyName" name="companyName" required>
+                            <div id="companyNameError" class="error"></div>
                         </div>
-
+        
                         <div class="form-group">
-                            <label for="emails">Email Addresses:</label>
-                            <input type="email" id="emailInput" placeholder="Enter email">
+                            <label for="companyNumber">Company Number:</label>
+                            <input type="text" id="companyNumber" name="companyNumber" required>
+                            <div id="companyNumberError" class="error"></div>
+                        </div>
+        
+                        <div class="form-group">
+                            <label for="email">Email Address:</label>
+                            <input type="email" id="email" name="email" required>
                             <div id="emailError" class="error"></div>
-                            <div class="email-list-container">
-                                <ul id="emailList" class="email-list"></ul>
-                            </div>
                         </div>
-
-                       
-
-                      
-
-                        <button type="submit" id="submitButton">Registration</button>
+        
+                        <div class="form-group">
+                            <label for="address">Address:</label>
+                            <input type="text" id="address" name="address">
+                            <div id="addressError" class="error"></div>
+                        </div>
+        
+                        <div class="form-group">
+                            <label for="website">Website:</label>
+                            <input type="url" id="website" name="website" placeholder="https://example.com">
+                            <div id="websiteError" class="error"></div>
+                        </div>
+        
+                        <button type="submit" id="submitButton">Register Company</button>
                     </form>
                 </div>
             </div>
