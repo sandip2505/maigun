@@ -12,9 +12,11 @@ router.post('/company-registration', controller.registerCompany);
 
 // Email Sender
 router.get('/email-sender', controller.emailSender);
+router.post('/email-sender', controller.sendEmail);
 
 // Email Logs
 router.get('/email-logs', controller.emailLogs);
+router.get('/log', controller.getEmailLogs);
 
 // Dashboard
 router.get('/dashboard', controller.dashboard);

@@ -1,6 +1,13 @@
 // controllers/controller.js
 const Company = require('../model/company'); 
 const EmailLog = require('../model/EmailLog'); 
+const nodemailer = require('nodemailer');
+const EmailService = require('../services/emailService');
+const emailService = new EmailService();
+
+
+
+
 
 exports.Home = async (req, res) => {
     try {
@@ -262,31 +269,169 @@ exports.registerCompany = async (req, res) => {
     }
 };
 
+// exports.sendEmail = async (req, res) => {
+//     try {
+//         const emailLog = new EmailLog({
+//             subject: req.body.subject,
+//             message: req.body.message,
+//             recipients: req.body.recipients,
+//             status: 'pending'
+//         });
+
+//         await emailLog.save();
+
+//         res.status(200).json({
+//             success: true,
+//             message: 'Email queued for sending',
+//             data: emailLog
+//         });
+//     } catch (error) {
+//         console.error('Email sending error:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error sending email',
+//             error: error.message
+//         });
+//     }
+// };
+
 exports.sendEmail = async (req, res) => {
+    let emailLog;
     try {
-        // Create email log entry
-        const emailLog = new EmailLog({
+        // Validate request
+        if (!req.body.subject || !req.body.message || !req.body.recipients) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields'
+            });
+        }
+
+        const recipients = Array.isArray(req.body.recipients) 
+            ? req.body.recipients 
+            : [req.body.recipients];
+
+        // Verify recipients
+        const { validEmails, invalidEmails } = await emailService.verifyRecipients(recipients);
+
+        if (validEmails.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No valid email recipients',
+                invalidEmails
+            });
+        }
+
+        // Create email log
+        emailLog = new EmailLog({
             subject: req.body.subject,
             message: req.body.message,
-            recipients: req.body.recipients,
-            status: 'pending'
+            recipients: validEmails,
+            invalidRecipients: invalidEmails,
+            status: 'pending',
+            createdAt: new Date(),
+            attachments: req.body.attachments || []
         });
 
         await emailLog.save();
 
-        // Here you would typically send the email using your email service
-        // After sending, update the status
+        // Prepare and send email
+        const mailOptions = emailService.prepareMailOptions(
+            validEmails,
+            req.body.subject,
+            req.body.message,
+            req.body.attachments
+        );
+
+        const info = await emailService.sendEmail(mailOptions);
+
+        // Update log with success
+        emailLog.status = 'sent';
+        emailLog.messageId = info.messageId;
+        emailLog.sentAt = new Date();
+        await emailLog.save();
 
         res.status(200).json({
             success: true,
-            message: 'Email queued for sending',
-            data: emailLog
+            message: 'Email sent successfully',
+            data: {
+                emailLog,
+                messageId: info.messageId,
+                validEmails,
+                invalidEmails
+            }
         });
+
     } catch (error) {
         console.error('Email sending error:', error);
+
+        if (emailLog) {
+            emailLog.status = 'failed';
+            emailLog.error = error.message;
+            await emailLog.save();
+        }
+
         res.status(500).json({
             success: false,
             message: 'Error sending email',
+            error: error.message
+        });
+    }
+};
+
+// Get email logs with pagination
+exports.getEmailLogs = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const logs = await EmailLog.find({})
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await EmailLog.countDocuments();
+
+        res.status(200).json({
+            success: true,
+            data: {
+                logs,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalLogs: total
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching email logs:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching email logs',
+            error: error.message
+        });
+    }
+};
+
+// Get email log by ID
+exports.getEmailLogById = async (req, res) => {
+    try {
+        const log = await EmailLog.findById(req.params.id);
+        
+        if (!log) {
+            return res.status(404).json({
+                success: false,
+                message: 'Email log not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: log
+        });
+    } catch (error) {
+        console.error('Error fetching email log:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching email log',
             error: error.message
         });
     }
