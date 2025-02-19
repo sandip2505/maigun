@@ -1,6 +1,6 @@
 // controllers/controller.js
-const Company = require('../model/company'); 
-const EmailLog = require('../model/EmailLog'); 
+const Company = require('../model/company');
+const EmailLog = require('../model/EmailLog');
 const nodemailer = require('nodemailer');
 const EmailService = require('../services/emailService');
 const emailService = new EmailService();
@@ -13,11 +13,11 @@ exports.Home = async (req, res) => {
     try {
         // Fetch stats for home page
         const totalCompanies = await Company.countDocuments();
-        
+
         // Get today's date at midnight for comparison
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const emailsSentToday = await EmailLog.countDocuments({
             createdAt: { $gte: today }
         });
@@ -30,8 +30,8 @@ exports.Home = async (req, res) => {
             createdAt: { $gte: today },
             status: 'sent'
         });
-        const successRate = totalEmailsToday ? 
-            Math.round((successfulEmailsToday / totalEmailsToday) * 100) + '%' : 
+        const successRate = totalEmailsToday ?
+            Math.round((successfulEmailsToday / totalEmailsToday) * 100) + '%' :
             '0%';
 
         res.render('home', {
@@ -269,6 +269,25 @@ exports.registerCompany = async (req, res) => {
     }
 };
 
+exports.companyList = async (req, res) => {
+    try {
+        const companies = await Company.find();
+        // res.status(200).json({
+        //     success: true,
+        //     data: companies
+        // });
+        res.render('company-list', { companies });
+
+    } catch (error) {
+        console.error('Company list error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching companies',
+            error: error.message
+        });
+    }
+}
+
 // exports.sendEmail = async (req, res) => {
 //     try {
 //         const emailLog = new EmailLog({
@@ -431,7 +450,7 @@ exports.getEmailLogs = async (req, res) => {
 exports.getEmailLogById = async (req, res) => {
     try {
         const log = await EmailLog.findById(req.params.id);
-        
+
         if (!log) {
             return res.status(404).json({
                 success: false,

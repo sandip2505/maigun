@@ -28,6 +28,7 @@ router.get('/', controller.Home);
 // Company Registration
 router.get('/company-registration', controller.companyRegistration);
 router.post('/company-registration', controller.registerCompany);
+router.get('/companylist', controller.companyList);
 
 // Email Sender
 router.get('/email-sender', controller.emailSender);
