@@ -29,76 +29,324 @@
                 <input type="text" id="subject" name="subject" required>
                 <div id="subjectError" class="error"></div>
             </div>
+
             <div class="form-group">
                 <label for="attachments">Attachments:</label>
                 <input type="file" id="attachments" name="attachments" multiple>
+                <div class="attachments-preview" id="attachmentsPreview"></div>
                 <div id="attachmentsError" class="error"></div>
             </div>
+
             <div class="form-group">
                 <label for="message">Message:</label>
-                <textarea id="message" name="message" rows="10" required></textarea>  </div> <div id="messageError" class="error"></div>
+                <textarea id="message" name="message" rows="10" required></textarea>
+                <div id="messageError" class="error"></div>
             </div>
-
-            
 
             <button type="submit" id="sendButton">Send Email</button>
         </form>
     </div>
 </div>
 
-<script src="https://cdn.ckeditor.com/4.20.0/standard/ckeditor.js"></script> <script>
-    CKEDITOR.replace('message'); // Replace 'message' with the ID of your textarea
+<script src="https://cdn.ckeditor.com/4.20.0/standard/ckeditor.js"></script>
+<script>
+    // Initialize CKEditor
+    const editor = CKEDITOR.replace('message', {
+        height: 300,
+        removePlugins: 'elementspath,resize',
+        toolbar: [
+            ['Bold', 'Italic', 'Underline', 'Strike'],
+            ['NumberedList', 'BulletedList'],
+            ['Link', 'Unlink'],
+            ['Undo', 'Redo'],
+            ['Source']
+        ]
+    });
+
+    // Form elements
+    const form = document.getElementById('emailForm');
+    const recipients = document.getElementById('recipients');
+    const subject = document.getElementById('subject');
+    const attachments = document.getElementById('attachments');
+    const attachmentsPreview = document.getElementById('attachmentsPreview');
+    const sendButton = document.getElementById('sendButton');
+    const loading = document.getElementById('loading');
+    const successAlert = document.getElementById('successAlert');
+    const errorAlert = document.getElementById('errorAlert');
+
+    // Error elements
+    const recipientsError = document.getElementById('recipientsError');
+    const subjectError = document.getElementById('subjectError');
+    const attachmentsError = document.getElementById('attachmentsError');
+    const messageError = document.getElementById('messageError');
+    console.log(recipients,subject,'formData')
+
+    // Validation functions
+    function validateRecipients() {
+        if (recipients.selectedOptions.length === 0) {
+            recipientsError.textContent = 'Please select at least one recipient';
+            recipientsError.style.display = 'block';
+            return false;
+        }
+        recipientsError.style.display = 'none';
+        return true;
+    }
+
+    function validateSubject() {
+        if (subject.value.trim() === '') {
+            subjectError.textContent = 'Subject is required';
+            subjectError.style.display = 'block';
+            return false;
+        }
+        subjectError.style.display = 'none';
+        return true;
+    }
+
+    function validateAttachments() {
+        const files = attachments.files;
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        for (let file of files) {
+            if (file.size > maxSize) {
+                attachmentsError.textContent = 'Each file must be less than 10MB';
+                attachmentsError.style.display = 'block';
+                return false;
+            }
+        }
+        attachmentsError.style.display = 'none';
+        return true;
+    }
+
+    function validateMessage() {
+        const content = editor.getData().trim();
+        if (content === '') {
+            messageError.textContent = 'Message is required';
+            messageError.style.display = 'block';
+            return false;
+        }
+        messageError.style.display = 'none';
+        return true;
+    }
+
+    // Handle file selection
+    attachments.addEventListener('change', function(e) {
+        attachmentsPreview.innerHTML = '';
+        
+        for (let file of this.files) {
+            const item = document.createElement('div');
+            item.className = 'attachment-item';
+            item.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-attachment" data-file="${file.name}">×</span>
+            `;
+            attachmentsPreview.appendChild(item);
+        }
+    });
+
+    // Handle attachment removal
+    attachmentsPreview.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-attachment')) {
+            const fileName = e.target.dataset.file;
+            const dt = new DataTransfer();
+            const files = attachments.files;
+
+            for (let file of files) {
+                if (file.name !== fileName) {
+                    dt.items.add(file);
+                }
+            }
+
+            attachments.files = dt.files;
+            e.target.parentElement.remove();
+        }
+    });
+
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Reset alerts
+        successAlert.style.display = 'none';
+        errorAlert.style.display = 'none';
+
+        // Validate form
+        const isValid = validateRecipients() &&
+                       validateSubject() &&
+                       validateAttachments() &&
+                       validateMessage();
+
+        if (!isValid) return;
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('recipients', Array.from(recipients.selectedOptions).map(opt => opt.value));
+        formData.append('subject', subject.value);
+        formData.append('message', editor.getData());
+        console.log(formData,'formData')
+        for (let file of attachments.files) {
+            formData.append('attachments', file);
+        }
+
+        try {
+            // Show loading
+            loading.style.display = 'block';
+            sendButton.disabled = true;
+            // Send request
+            const response = await fetch('/email-sender', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                successAlert.textContent = 'Email sent successfully!';
+                successAlert.style.display = 'block';
+                form.reset();
+                editor.setData('');
+                attachmentsPreview.innerHTML = '';
+            } else {
+                throw new Error(result.message || 'Failed to send email');
+            }
+        } catch (error) {
+            errorAlert.textContent = error.message;
+            errorAlert.style.display = 'block';
+        } finally {
+            loading.style.display = 'none';
+            sendButton.disabled = false;
+        }
+    });
 </script>
 
 <style>
-.email-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2rem;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+    .email-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
 
-.form-group {
-    margin-bottom: 1.5rem;
-}
+    .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
 
-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-}
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
 
-input, select, textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-}
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
 
-select[multiple] {
-    height: 150px;
-}
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
 
-textarea {
-    resize: vertical;
-}
+    select[multiple] {
+        height: 150px;
+    }
 
-button {
-    width: 100%;
-    padding: 1rem;
-    background: #2c3e50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
+    .error {
+        color: #e74c3c;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: none;
+    }
 
-button:hover {
-    background: #34495e;
-}
+    .alert {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    button {
+        width: 100%;
+        padding: 1rem;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    button:hover {
+        background: #2980b9;
+        transform: translateY(-1px);
+    }
+
+    button:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+    }
+
+    .attachments-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .attachment-item {
+        background: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .remove-attachment {
+        color: #e74c3c;
+        cursor: pointer;
+    }
 </style>

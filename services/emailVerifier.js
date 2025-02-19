@@ -4,70 +4,43 @@ const { promisify } = require('util');
 const resolveMxPromise = promisify(dns.resolveMx);
 
 class EmailVerifier {
-    constructor() {
-        this.disposableEmailDomains = [
-            'tempmail.com', 'temp-mail.org', 'throwawaymail.com',
-            'mailinator.com', 'guerrillamail.com', 'sharklasers.com',
-            'example.com', 'test.com'
-        ];
-    }
-
     async verifyEmail(email) {
+        // Basic email validation regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
         try {
-            const result = {
+            if (!email) {
+                return {
+                    email,
+                    isValid: false,
+                    reason: 'Email is empty'
+                };
+            }
+
+            if (!emailRegex.test(email)) {
+                return {
+                    email,
+                    isValid: false,
+                    reason: 'Invalid email format'
+                };
+            }
+
+            // Add any additional verification logic here
+            // For now, we'll consider it valid if it passes the regex
+            return {
                 email,
-                isValid: false,
-                reason: null,
-                isDisposable: false
+                isValid: true
             };
-
-            if (!this.isValidFormat(email)) {
-                result.reason = 'Invalid email format';
-                return result;
-            }
-
-            const domain = email.split('@')[1];
-            if (this.isDisposableEmail(domain)) {
-                result.isDisposable = true;
-                result.reason = 'Disposable email detected';
-                return result;
-            }
-
-            const hasMx = await this.checkMxRecord(domain);
-            if (!hasMx) {
-                result.reason = 'Domain does not have valid MX records';
-                return result;
-            }
-
-            result.isValid = true;
-            return result;
         } catch (error) {
+            console.error('Email verification error:', error);
             return {
                 email,
                 isValid: false,
-                reason: 'Verification error: ' + error.message,
-                isDisposable: false
+                reason: error.message
             };
         }
     }
-
-    isValidFormat(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
-
-    isDisposableEmail(domain) {
-        return this.disposableEmailDomains.includes(domain.toLowerCase());
-    }
-
-    async checkMxRecord(domain) {
-        try {
-            const mxRecords = await resolveMxPromise(domain);
-            return mxRecords && mxRecords.length > 0;
-        } catch (error) {
-            return false;
-        }
-    }
 }
+
 
 module.exports = EmailVerifier;

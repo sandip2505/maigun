@@ -8,6 +8,8 @@ const EmailLog = require("./model/EmailLog");
 const Router = require("./Route/route");
 dotenv.config();
 const app = express();
+const bodyParser = require('body-parser');
+
 
 connectDB();
 
@@ -18,6 +20,10 @@ app.use(express.static('public'))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Body parser middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 
 const transporter = nodemailer.createTransport({

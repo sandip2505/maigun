@@ -297,6 +297,9 @@ exports.registerCompany = async (req, res) => {
 
 exports.sendEmail = async (req, res) => {
     let emailLog;
+    console.log('Body:', req.body);
+    console.log('Files:', req.files);
+
     try {
         // Validate request
         if (!req.body.subject || !req.body.message || !req.body.recipients) {
@@ -306,40 +309,55 @@ exports.sendEmail = async (req, res) => {
             });
         }
 
-        const recipients = Array.isArray(req.body.recipients) 
-            ? req.body.recipients 
-            : [req.body.recipients];
-
-        // Verify recipients
-        const { validEmails, invalidEmails } = await emailService.verifyRecipients(recipients);
-
-        if (validEmails.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'No valid email recipients',
-                invalidEmails
-            });
+        // Handle recipients - could be string, array, or JSON string
+        let recipients;
+        if (typeof req.body.recipients === 'string') {
+            // If it's a comma-separated string, split it
+            if (req.body.recipients.includes(',')) {
+                recipients = req.body.recipients.split(',').map(email => email.trim());
+            } else {
+                // Check if it's a JSON string
+                try {
+                    recipients = JSON.parse(req.body.recipients);
+                } catch (e) {
+                    // If not JSON, treat it as a single email
+                    recipients = [req.body.recipients];
+                }
+            }
+        } else if (Array.isArray(req.body.recipients)) {
+            recipients = req.body.recipients;
+        } else {
+            recipients = [req.body.recipients];
         }
+
+        // Process attachments from req.files
+        const attachments = req.files ? req.files.map(file => ({
+            filename: file.originalname,
+            path: file.path,
+            contentType: file.mimetype
+        })) : [];
+
+        console.log('Processed recipients:', recipients);
+        console.log('Processed attachments:', attachments);
 
         // Create email log
         emailLog = new EmailLog({
             subject: req.body.subject,
             message: req.body.message,
-            recipients: validEmails,
-            invalidRecipients: invalidEmails,
+            recipients: recipients,
             status: 'pending',
             createdAt: new Date(),
-            attachments: req.body.attachments || []
+            attachments: attachments
         });
 
         await emailLog.save();
 
         // Prepare and send email
         const mailOptions = emailService.prepareMailOptions(
-            validEmails,
+            recipients,
             req.body.subject,
             req.body.message,
-            req.body.attachments
+            attachments
         );
 
         const info = await emailService.sendEmail(mailOptions);
@@ -356,8 +374,7 @@ exports.sendEmail = async (req, res) => {
             data: {
                 emailLog,
                 messageId: info.messageId,
-                validEmails,
-                invalidEmails
+                recipients
             }
         });
 
@@ -377,7 +394,6 @@ exports.sendEmail = async (req, res) => {
         });
     }
 };
-
 // Get email logs with pagination
 exports.getEmailLogs = async (req, res) => {
     try {
